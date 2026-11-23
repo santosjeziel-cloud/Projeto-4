@@ -1,0 +1,616 @@
+Aqui está o código completo em um único arquivo **HTML** (com CSS e JavaScript integrados). Basta criar um arquivo chamado `index.html` no seu VS Code, colar o código abaixo e abrir no navegador (usando a extensão *Live Server* ou clicando duas vezes no arquivo):
+
+```html
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Explorador de Dispersão & Desvio Padrão</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-light: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --primary: #38bdf8;
+      --accent: #10b981;
+      --accent-bg: rgba(16, 185, 129, 0.16);
+      --warning: #f59e0b;
+      --border: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 1050px;
+      margin: 0 auto;
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      color: var(--primary);
+      margin-bottom: 0.35rem;
+    }
+
+    header p {
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    }
+
+    .card h2 {
+      font-size: 1.15rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #e2e8f0;
+    }
+
+    /* Controles de Entrada */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 260px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: 'Consolas', 'Courier New', monospace;
+    }
+
+    input[type="text"]:focus {
+      outline: 2px solid var(--primary);
+      border-color: transparent;
+    }
+
+    button {
+      background: var(--primary);
+      color: #0f172a;
+      border: none;
+      padding: 0.7rem 1.15rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    button.secondary {
+      background: var(--surface-light);
+      color: var(--text);
+    }
+
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    /* Grid de Métricas */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .metric-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    .metric-box .label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .metric-box .value {
+      font-size: 1.65rem;
+      font-weight: 700;
+      margin-top: 0.25rem;
+    }
+
+    .metric-box .sub {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    .color-primary { color: var(--primary); }
+    .color-accent { color: var(--accent); }
+    .color-warning { color: var(--warning); }
+
+    /* Área do Gráfico */
+    .chart-wrapper {
+      position: relative;
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    canvas {
+      width: 100%;
+      max-width: 100%;
+      height: 360px;
+      background: var(--bg);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      display: block;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      margin-top: 0.85rem;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    /* Explicação e Código Python */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 780px) {
+      .two-col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .explanation p {
+      color: #cbd5e1;
+      margin-bottom: 0.85rem;
+      font-size: 0.95rem;
+    }
+
+    .highlight-box {
+      background: var(--accent-bg);
+      border-left: 4px solid var(--accent);
+      padding: 0.9rem 1rem;
+      border-radius: 6px;
+      font-size: 0.93rem;
+      color: #ecfdf5;
+    }
+
+    pre {
+      background: #090d16;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.86rem;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.6rem;
+    }
+
+    .error-msg {
+      color: #f87171;
+      font-size: 0.9rem;
+      margin-top: 0.4rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Laboratório Visual: Média e Desvio Padrão</h1>
+      <p>Explore como a faixa [média − desvio padrão, média + desvio padrão] revela a concentração dos dados</p>
+    </header>
+
+    <!-- Entrada de Dados -->
+    <section class="card">
+      <h2>1. Conjunto de Dados</h2>
+      <div class="controls">
+        <input type="text" id="dataInput" value="5, 6, 6, 7, 7, 7, 8, 8, 9, 10" placeholder="Digite números separados por vírgula..." />
+        <button id="updateBtn">Calcular e Atualizar</button>
+      </div>
+      <div id="errorMsg" class="error-msg">Insira pelo menos 2 números válidos separados por vírgula.</div>
+      <div class="presets">
+        <span>Cenários rápidos:</span>
+        <button class="secondary" data-preset="5, 6, 6, 7, 7, 7, 8, 8, 9, 10">Desafio Original</button>
+        <button class="secondary" data-preset="7, 7, 7, 7, 7, 8, 8, 7, 7, 7">Dados Muito Concentrados</button>
+        <button class="secondary" data-preset="1, 2, 4, 7, 7, 8, 11, 13, 15, 18">Dados Muito Dispersos</button>
+      </div>
+    </section>
+
+    <!-- Métricas Principais -->
+    <section class="metrics-grid">
+      <div class="metric-box">
+        <div class="label">Média Aritmética (x̄)</div>
+        <div class="value color-primary" id="meanVal">7.30</div>
+        <div class="sub">Centro de equilíbrio dos dados</div>
+      </div>
+      <div class="metric-box">
+        <div class="label">Desvio Padrão Amostral (s)</div>
+        <div class="value color-warning" id="stdVal">1.49</div>
+        <div class="sub">NumPy: ddof=1 (divisor n − 1)</div>
+      </div>
+      <div class="metric-box">
+        <div class="label">Intervalo (Média ± Desvio)</div>
+        <div class="value color-accent" id="rangeVal">5.81 a 8.79</div>
+        <div class="sub" id="minMaxSub">Mín: 5.81 | Máx: 8.79</div>
+      </div>
+      <div class="metric-box">
+        <div class="label">Valores Dentro da Faixa</div>
+        <div class="value" id="insideCountVal">7 de 10 (70%)</div>
+        <div class="sub" id="insideListSub">Valores: 6, 6, 7, 7, 7, 8, 8</div>
+      </div>
+    </section>
+
+    <!-- Histograma -->
+    <section class="card">
+      <h2>2. Histograma com Faixa de Dispersão Destacada</h2>
+      <div class="chart-wrapper">
+        <canvas id="histCanvas" width="960" height="360"></canvas>
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <span class="swatch" style="background: rgba(16, 185, 129, 0.25); border: 1px dashed #10b981;"></span>
+          <span>Faixa [Média − Desvio, Média + Desvio]</span>
+        </div>
+        <div class="legend-item">
+          <span class="swatch" style="background: #38bdf8;"></span>
+          <span>Linha da Média (x̄)</span>
+        </div>
+        <div class="legend-item">
+          <span class="swatch" style="background: #10b981;"></span>
+          <span>Frequência dentro da faixa</span>
+        </div>
+        <div class="legend-item">
+          <span class="swatch" style="background: #64748b;"></span>
+          <span>Frequência fora da faixa</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interpretação e Código Python -->
+    <section class="two-col">
+      <div class="card explanation">
+        <h2>3. O que essa faixa representa?</h2>
+        <p id="explanationText">
+          A média (<strong>7.30</strong>) mostra apenas o ponto central, mas não diz se os valores estão próximos ou espalhados. O desvio padrão amostral (<strong>1.49</strong>) mede a distância típica dos dados em relação à média.
+        </p>
+        <div class="highlight-box" id="interpretationHighlight">
+          A faixa destacada entre <strong>5.81</strong> e <strong>8.79</strong> representa a <strong>zona de comportamento típico (normalidade)</strong> da amostra. Neste conjunto, <strong>70% dos dados (7 de 10 valores)</strong> caem dentro desse intervalo, mostrando que a maioria das observações está bem próxima da média, enquanto apenas os extremos (5, 9 e 10) ficam fora.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="code-header">
+          <h2 style="margin-bottom: 0;">4. Código Equivalente em Python (NumPy)</h2>
+          <button class="secondary" id="copyCodeBtn" style="padding: 0.4rem 0.8rem; font-size: 0.82rem;">Copiar Código</button>
+        </div>
+        <pre id="pythonCode"></pre>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const dataInput = document.getElementById('dataInput');
+    const updateBtn = document.getElementById('updateBtn');
+    const errorMsg = document.getElementById('errorMsg');
+    const canvas = document.getElementById('histCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function parseData(str) {
+      const nums = str
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s !== '')
+        .map(Number)
+        .filter(n => !Number.isNaN(n) && Number.isFinite(n));
+      return nums;
+    }
+
+    function calculateStats(arr) {
+      const n = arr.length;
+      const mean = arr.reduce((acc, v) => acc + v, 0) / n;
+      // Desvio padrão amostral (ddof = 1)
+      const variance = arr.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) / (n - 1);
+      const std = Math.sqrt(variance);
+      const minRange = mean - std;
+      const maxRange = mean + std;
+      const inside = arr.filter(v => v >= minRange && v <= maxRange);
+      const outside = arr.filter(v => v < minRange || v > maxRange);
+
+      return { n, mean, std, minRange, maxRange, inside, outside };
+    }
+
+    function drawHistogram(arr, stats) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = 360 * dpr;
+      ctx.scale(dpr, dpr);
+
+      const width = rect.width;
+      const height = 360;
+      const pad = { top: 45, right: 40, bottom: 50, left: 55 };
+      const plotW = width - pad.left - pad.right;
+      const plotH = height - pad.top - pad.bottom;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Agrupar frequências por valores inteiros/únicos ordenados
+      const minVal = Math.floor(Math.min(...arr, stats.minRange));
+      const maxVal = Math.ceil(Math.max(...arr, stats.maxRange));
+
+      const bins = [];
+      for (let v = minVal; v <= maxVal; v++) {
+        const count = arr.filter(x => Math.round(x) === v).length;
+        bins.push({ value: v, count });
+      }
+
+      const maxFreq = Math.max(...bins.map(b => b.count), 1);
+
+      // Função de mapeamento X contínuo (centro de cada bin)
+      const domainMin = minVal - 0.6;
+      const domainMax = maxVal + 0.6;
+      const xScale = val => pad.left + ((val - domainMin) / (domainMax - domainMin)) * plotW;
+      const yScale = freq => pad.top + plotH - (freq / maxFreq) * plotH;
+
+      // Grades horizontais (Eixo Y)
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px system-ui';
+      ctx.textAlign = 'right';
+
+      for (let f = 0; f <= maxFreq; f++) {
+        const y = yScale(f);
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(width - pad.right, y);
+        ctx.stroke();
+        ctx.fillText(f, pad.left - 10, y + 4);
+      }
+
+      // 1. Desenhar a faixa destacada [média - desvio, média + desvio]
+      const xStart = xScale(stats.minRange);
+      const xEnd = xScale(stats.maxRange);
+
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.16)';
+      ctx.fillRect(xStart, pad.top, xEnd - xStart, plotH);
+
+      // Bordas tracejadas da faixa
+      ctx.save();
+      ctx.setLineDash([6, 4]);
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 2;
+
+      ctx.beginPath();
+      ctx.moveTo(xStart, pad.top);
+      ctx.lineTo(xStart, pad.top + plotH);
+      ctx.moveTo(xEnd, pad.top);
+      ctx.lineTo(xEnd, pad.top + plotH);
+      ctx.stroke();
+      ctx.restore();
+
+      // Rótulos dos limites da faixa no topo
+      ctx.fillStyle = '#10b981';
+      ctx.font = 'bold 11px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(`−1s (${stats.minRange.toFixed(2)})`, xStart, pad.top - 10);
+      ctx.fillText(`+1s (${stats.maxRange.toFixed(2)})`, xEnd, pad.top - 10);
+
+      // 2. Desenhar Barras do Histograma
+      const barWidth = (plotW / (domainMax - domainMin)) * 0.72;
+      bins.forEach(bin => {
+        const cx = xScale(bin.value);
+        const barH = (bin.count / maxFreq) * plotH;
+        const y = pad.top + plotH - barH;
+
+        const isInside = bin.value >= stats.minRange && bin.value <= stats.maxRange;
+
+        if (bin.count > 0) {
+          ctx.fillStyle = isInside ? 'rgba(16, 185, 129, 0.75)' : 'rgba(100, 116, 139, 0.65)';
+          ctx.strokeStyle = isInside ? '#34d399' : '#94a3b8';
+          ctx.lineWidth = 1.5;
+
+          ctx.beginPath();
+          ctx.roundRect(cx - barWidth / 2, y, barWidth, barH, [4, 4, 0, 0]);
+          ctx.fill();
+          ctx.stroke();
+
+          // Frequência no topo da barra
+          ctx.fillStyle = '#f8fafc';
+          ctx.font = 'bold 12px system-ui';
+          ctx.textAlign = 'center';
+          ctx.fillText(bin.count, cx, y - 6);
+        }
+
+        // Rótulo do Eixo X
+        ctx.fillStyle = '#cbd5e1';
+        ctx.font = '12px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText(bin.value, cx, pad.top + plotH + 22);
+      });
+
+      // 3. Linha Vertical da Média
+      const xMean = xScale(stats.mean);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(xMean, pad.top - 4);
+      ctx.lineTo(xMean, pad.top + plotH);
+      ctx.stroke();
+
+      // Badge da Média
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 12px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(`Média: ${stats.mean.toFixed(2)}`, xMean, pad.top - 26);
+
+      // Títulos dos Eixos
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText('Valores Coletados', pad.left + plotW / 2, height - 10);
+
+      ctx.save();
+      ctx.translate(16, pad.top + plotH / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('Frequência', 0, 0);
+      ctx.restore();
+    }
+
+    function updateUI() {
+      const arr = parseData(dataInput.value);
+      if (arr.length < 2) {
+        errorMsg.style.display = 'block';
+        return;
+      }
+      errorMsg.style.display = 'none';
+
+      const stats = calculateStats(arr);
+      const pct = ((stats.inside.length / stats.n) * 100).toFixed(0);
+
+      document.getElementById('meanVal').textContent = stats.mean.toFixed(2);
+      document.getElementById('stdVal').textContent = stats.std.toFixed(2);
+      document.getElementById('rangeVal').textContent = `${stats.minRange.toFixed(2)} a ${stats.maxRange.toFixed(2)}`;
+      document.getElementById('minMaxSub').textContent = `Mínimo: ${stats.minRange.toFixed(2)} | Máximo: ${stats.maxRange.toFixed(2)}`;
+      document.getElementById('insideCountVal').textContent = `${stats.inside.length} de ${stats.n} (${pct}%)`;
+      document.getElementById('insideListSub').textContent = stats.inside.length > 0
+        ? `Valores: ${stats.inside.join(', ')}`
+        : 'Nenhum valor dentro da faixa';
+
+      // Atualizar explicação dinâmica
+      document.getElementById('explanationText').innerHTML = `
+        A média (<strong>${stats.mean.toFixed(2)}</strong>) mostra apenas o ponto central, mas não diz se os valores estão próximos ou espalhados. O desvio padrão amostral (<strong>${stats.std.toFixed(2)}</strong>) mede a distância típica dos dados em relação à média.
+      `;
+
+      const outsideText = stats.outside.length > 0
+        ? `enquanto os valores mais afastados (${stats.outside.join(', ')}) ficam fora.`
+        : `com 100% dos valores concentrados nesse intervalo.`;
+
+      document.getElementById('interpretationHighlight').innerHTML = `
+        A faixa destacada entre <strong>${stats.minRange.toFixed(2)}</strong> e <strong>${stats.maxRange.toFixed(2)}</strong> representa a <strong>zona de comportamento típico</strong> da amostra. Neste conjunto, <strong>${pct}% dos dados (${stats.inside.length} de ${stats.n} valores)</strong> estão dentro desse intervalo, ${outsideText}
+      `;
+
+      // Atualizar snippet Python
+      document.getElementById('pythonCode').textContent = `import numpy as np
+import matplotlib.pyplot as plt
+
+dados = [${arr.join(', ')}]
+
+media = np.mean(dados)
+desvio_amostral = np.std(dados, ddof=1)  # ddof=1 para amostra
+
+limite_inf = media - desvio_amostral
+limite_sup = media + desvio_amostral
+
+print(f"Média: {media:.2f}")
+print(f"Desvio padrão amostral: {desvio_amostral:.2f}")
+print(f"Intervalo: [{limite_inf:.2f}, {limite_sup:.2f}]")
+
+# Plotando o histograma e a faixa
+plt.hist(dados, bins=range(int(min(dados)), int(max(dados)) + 2), align='left', rwidth=0.8)
+plt.axvspan(limite_inf, limite_sup, color='green', alpha=0.25, label='Média ± 1 Desvio')
+plt.axvline(media, color='blue', linestyle='--', label=f'Média ({media:.2f})')
+plt.legend()
+plt.show()`;
+
+      drawHistogram(arr, stats);
+    }
+
+    updateBtn.addEventListener('click', updateUI);
+    dataInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') updateUI();
+    });
+
+    document.querySelectorAll('[data-preset]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        dataInput.value = btn.getAttribute('data-preset');
+        updateUI();
+      });
+    });
+
+    document.getElementById('copyCodeBtn').addEventListener('click', () => {
+      const code = document.getElementById('pythonCode').textContent;
+      navigator.clipboard.writeText(code);
+      const btn = document.getElementById('copyCodeBtn');
+      btn.textContent = 'Copiado!';
+      setTimeout(() => (btn.textContent = 'Copiar Código'), 1800);
+    });
+
+    window.addEventListener('resize', updateUI);
+    updateUI();
+  </script>
+</body>
+</html>
+
+```
